@@ -1,5 +1,5 @@
 {
-    "name": "nil/kernel",
+    "name": "php-nil/kernel",
     "description": "Nil Kernel - A lightweight PHP kernel built on Symfony components",
     "keywords": ["nil", "kernel", "framework", "symfony"],
     "license": "MIT",
