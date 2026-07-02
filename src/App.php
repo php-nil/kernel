@@ -131,7 +131,7 @@ class App
             return new UrlMatcher($collection, $context);
         } else {
             // 缓存模式
-            $cacheFile = Nil::path()->RUNTIME . '/UrlMatcher.php';
+            $cacheFile = Nil::path()->getRuntimeFile('UrlMatcher.php');
             if (!file_exists($cacheFile)) {
                 // 路由事件 收集路由集
                 $event = new Event\RouterEvent($request);
