@@ -105,21 +105,21 @@ class Log
         return $this->logs[$name] ??= $this->withName($from)->withName($name);
     }
 
-    public function withDefault(): Logger
-    {
-        return $this->withName(DEFAULT_NAME);
-    }
+    // public function withDefault(): Logger
+    // {
+    //     return $this->withName(DEFAULT_NAME);
+    // }
 
     /**
      * 获取指定名称的日志实例
      *
-     * @param string $name 日志名称
+     * @param string|null $name 日志名称，默认为 DEFAULT_NAME
      *
      * @return Logger
      */
-    public function withName(string $name): Logger
+    public function withName(?string $name = null): Logger
     {
-        return $this->logs[$name] ??= $this->newLogger($name);
+        return $this->logs[$name ?? DEFAULT_NAME] ??= $this->newLogger($name ?? DEFAULT_NAME);
     }
 
     public function withStreamLogger(string $name): Logger

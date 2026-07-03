@@ -121,13 +121,24 @@ final class Kernel
      * 
      * @return Cache
      */
-    public static function cache(): Cache
+    public static function getCache(): Cache
     {
         if (!isset(self::$cache)) {
             self::$cache = new Cache;
         }
 
         return self::$cache;
+    }
+
+    /**
+     * 缓存直接操作
+     * 
+     * @param string|null $name 缓存名称，默认为 DEFAULT_NAME
+     * @return \Psr\Cache\CacheItemPoolInterface
+     */
+    public static function cache(?string $name = null): \Psr\Cache\CacheItemPoolInterface
+    {
+        return self::getCache()->get($name);
     }
 
     /**
@@ -153,7 +164,7 @@ final class Kernel
      */
     public static function log(?string $name = null): \Monolog\Logger
     {
-        return self::getLog()->withName($name ?? DEFAULT_NAME);
+        return self::getLog()->withName($name);
     }
 
     /**
