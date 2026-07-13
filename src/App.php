@@ -13,7 +13,6 @@ use Symfony\Component\Routing\Matcher\CompiledUrlMatcher;
 class App
 {
     protected EventDispatcher $dispatcher;
-    protected array $boots = [];
 
     public function __construct()
     {
