@@ -10,12 +10,6 @@ use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\Matcher\Dumper\CompiledUrlMatcherDumper;
 use Symfony\Component\Routing\Matcher\CompiledUrlMatcher;
 
-// Nil::use([
-//     'symfony.event-dispatcher',
-//     'symfony.routing',
-//     'symfony.http-foundation'
-// ]);
-
 class App
 {
     protected EventDispatcher $dispatcher;
@@ -29,7 +23,7 @@ class App
     /**
      * 事件分发
      */
-    public function eventDispatch(object $event, string $eventName)
+    protected function eventDispatch(object $event, string $eventName)
     {
         return $this->dispatcher->dispatch($event, $eventName);
     }
@@ -40,27 +34,6 @@ class App
     public function getDispatcher()
     {
         return $this->dispatcher;
-    }
-
-    /**
-     * 启动应用
-     */
-    public function boot(array|string $apps)
-    {
-        $apps = (array) $apps;
-
-        foreach ($apps as $name) {
-            // 不重复启动
-            if (!isset($this->boots[$name])) {
-                $app = Nil::get($name);
-                if ($app instanceof EventAppInterface) {
-                    $app->kernelEvent($this->dispatcher);
-                }
-                $this->boots[$name] = true;
-            }
-        }
-
-        return $this;
     }
 
     /**

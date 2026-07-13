@@ -196,17 +196,18 @@ final class Kernel
     /**
      * 启动应用-只调用一次
      * 
-     * @param mixed|null $apps 应用配置或实例
+     * @param EventCollectorInterface[] $events 事件收集列表
      * 
      * @return void
      */
-    public static function boot(array|string|null $apps = null): void
+    public static function boot(EventCollectorInterface ...$events): void
     {
         // 初始化 Kernel
         static::init();
 
-        if (null !== $apps) {
-            self::$app->boot($apps);
+        $dispatcher = self::$app->getDispatcher();
+        foreach ($events as $event) {
+            $event::kernelEvent($dispatcher);
         }
 
         self::$app->run();
