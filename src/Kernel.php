@@ -196,18 +196,28 @@ final class Kernel
     /**
      * 启动应用-只调用一次
      * 
-     * @param EventCollectorInterface[] $events 事件收集列表
+     * @param string|\Closure[] $events 事件收集列表
      * 
      * @return void
      */
-    public static function boot(EventCollectorInterface ...$events): void
+    public static function boot(string|\Closure ...$events): void
     {
         // 初始化 Kernel
         static::init();
 
         $dispatcher = self::$app->getDispatcher();
         foreach ($events as $event) {
-            $event::kernelEvent($dispatcher);
+            if ($event instanceof \Closure) {
+                $event();
+                continue;
+            }
+
+            // 事件类
+            if (class_exists($event) && $event instanceof EventCollectorInterface) {
+                $event::kernelEvent($dispatcher);
+            } else {
+                throw new \Exception("event{$event} class not found or not implements EventCollectorInterface!");
+            }
         }
 
         self::$app->run();
