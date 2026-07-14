@@ -213,7 +213,7 @@ final class Kernel
             }
 
             // 事件类
-            if (class_exists($event) && $event instanceof EventCollectorInterface) {
+            if (class_exists($event) && is_subclass_of($event,EventCollectorInterface::class)) {
                 $event::kernelEvent($dispatcher);
             } else {
                 throw new \Exception("event{$event} class not found or not implements EventCollectorInterface!");
