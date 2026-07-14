@@ -208,7 +208,7 @@ final class Kernel
         $dispatcher = self::$app->getDispatcher();
         foreach ($events as $event) {
             if ($event instanceof \Closure) {
-                $event();
+                $event($dispatcher);
                 continue;
             }
 
