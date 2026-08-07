@@ -6,6 +6,7 @@ use Nil\Nil;
 use Symfony\Component\ErrorHandler\BufferingLogger;
 use Symfony\Component\ErrorHandler\Debug;
 use Symfony\Component\ErrorHandler\ErrorHandler;
+use Psr\Cache\CacheItemPoolInterface;
 
 /**
  * 默认配置名称
@@ -134,9 +135,9 @@ final class Kernel
      * 缓存直接操作
      * 
      * @param string|null $name 缓存名称，默认为 DEFAULT_NAME
-     * @return \Psr\Cache\CacheItemPoolInterface
+     * @return CacheItemPoolInterface
      */
-    public static function cache(?string $name = null): \Psr\Cache\CacheItemPoolInterface
+    public static function cache(?string $name = null): CacheItemPoolInterface
     {
         return self::getCache()->get($name);
     }
@@ -212,7 +213,7 @@ final class Kernel
                 continue;
             }
 
-            // 事件类
+            // 事件类必须实现 EventCollectorInterface 接口
             if (class_exists($event) && is_subclass_of($event,EventCollectorInterface::class)) {
                 $event::kernelEvent($dispatcher);
             } else {

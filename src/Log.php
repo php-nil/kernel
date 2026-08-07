@@ -2,6 +2,7 @@
 
 namespace Nil\Kernel;
 
+use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use Monolog\Handler\HandlerInterface;
 use Monolog\Handler\RotatingFileHandler;
@@ -49,17 +50,27 @@ class Log
      *
      * @return HandlerInterface
      */
-    public function getDefaultHandler(): HandlerInterface
+    public function getDefaultHandler(?Level $level = null): HandlerInterface
     {
         if (!isset($this->defaultHandler)) {
             $this->defaultHandler = new RotatingFileHandler(
                 Kernel::path()->LOG . \DIRECTORY_SEPARATOR . 'default_rotating.log',
                 0,
-                Level::Info
+                $level ?? $this->getDefaultLevel()
             );
         }
 
         return $this->defaultHandler;
+    }
+
+    /**
+     * 获取默认日志级别
+     *
+     * @return Level
+     */
+    public function getDefaultLevel(): Level
+    {
+        return Nil::debug() ? Level::Debug : Level::Info;
     }
 
     /**
@@ -105,11 +116,6 @@ class Log
         return $this->logs[$name] ??= $this->withName($from)->withName($name);
     }
 
-    // public function withDefault(): Logger
-    // {
-    //     return $this->withName(DEFAULT_NAME);
-    // }
-
     /**
      * 获取指定名称的日志实例
      *
@@ -122,12 +128,29 @@ class Log
         return $this->logs[$name ?? DEFAULT_NAME] ??= $this->newLogger($name ?? DEFAULT_NAME);
     }
 
-    public function withStreamLogger(string $name): Logger
+    public function withStreamLogger(string $name, ?Level $level = null): Logger
     {
         if (!isset($this->logs[$name])) {
             $handler = new StreamHandler(
-                Kernel::path()->LOG . \DIRECTORY_SEPARATOR . $name . '.stream.log'
+                Kernel::path()->LOG . \DIRECTORY_SEPARATOR . $name . '.stream.log',
+                $level ?? $this->getDefaultLevel()
             );
+
+            $this->logs[$name] = $this->newLogger($name, [$handler]);
+        }
+
+        return $this->logs[$name];
+    }
+
+    /**
+     * 创建测试日志实例，不写入文件，仅用于测试
+     *
+     * @return Logger
+     */
+    public function withTestLogger(string $name): Logger
+    {
+        if (!isset($this->logs[$name])) {
+            $handler = new TestHandler();
 
             $this->logs[$name] = $this->newLogger($name, [$handler]);
         }
