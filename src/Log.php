@@ -105,6 +105,8 @@ class Log
 
     /**
      * 基于已有日志创建新日志实例
+     * 
+     * 新日志实例将继承源日志实例的处理器和处理器配置。
      *
      * @param string $name 新日志名称
      * @param string $from 源日志名称
@@ -128,11 +130,43 @@ class Log
         return $this->logs[$name ?? DEFAULT_NAME] ??= $this->newLogger($name ?? DEFAULT_NAME);
     }
 
+    /**
+     * 创建流日志实例
+     *
+     * @param string $name 日志名称
+     * @param Level|null $level 日志级别，默认为 DEFAULT_LEVEL
+     *
+     * @return Logger
+     */
     public function withStreamLogger(string $name, ?Level $level = null): Logger
     {
         if (!isset($this->logs[$name])) {
             $handler = new StreamHandler(
                 Kernel::path()->LOG . \DIRECTORY_SEPARATOR . $name . '.stream.log',
+                $level ?? $this->getDefaultLevel()
+            );
+
+            $this->logs[$name] = $this->newLogger($name, [$handler]);
+        }
+
+        return $this->logs[$name];
+    }
+
+    /**
+     * 创建轮换文件日志实例
+     *
+     * @param string $name 日志名称
+     * @param int $maxFiles 最大文件数，默认为 0，表示不限制文件数
+     * @param Level|null $level 日志级别，默认为 DEFAULT_LEVEL
+     *
+     * @return Logger
+     */
+    public function withRotatingFileLogger(string $name, int $maxFiles = 0, ?Level $level = null): Logger
+    {
+        if (!isset($this->logs[$name])) {
+            $handler = new RotatingFileHandler(
+                Kernel::path()->LOG . \DIRECTORY_SEPARATOR . $name . \DIRECTORY_SEPARATOR . 'rotating.log',
+                $maxFiles,
                 $level ?? $this->getDefaultLevel()
             );
 
