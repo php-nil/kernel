@@ -10,8 +10,6 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Nil\Nil;
 
-// Nil::use('monolog.monolog');
-
 /**
  * Log 日志管理器
  * 
@@ -46,7 +44,8 @@ class Log
     /**
      * 获取默认日志处理器
      *
-     * 如果未设置，自动创建 RotatingFileHandler。
+     * 如果未设置，自动创建 RotatingFileHandler。处理器为单例缓存，
+     * $level 仅在首次创建时生效，后续调用传入将被忽略（需更换请用 setDefaultHandler()）。
      *
      * @return HandlerInterface
      */
@@ -105,17 +104,24 @@ class Log
 
     /**
      * 基于已有日志创建新日志实例
-     * 
-     * 新日志实例将继承源日志实例的处理器和处理器配置。
+     *
+     * 新日志实例将继承源日志实例的处理器和处理器配置。源日志必须已存在，
+     * 否则快速失败，避免静默克隆到默认处理器。
      *
      * @param string $name 新日志名称
      * @param string $from 源日志名称
      *
      * @return Logger
+     *
+     * @throws \RuntimeException 源日志未定义
      */
     public function cloneFromName(string $name, string $from): Logger
     {
-        return $this->logs[$name] ??= $this->withName($from)->withName($name);
+        if (!isset($this->logs[$from])) {
+            throw new \RuntimeException(\sprintf('log: %s is not defined!', $from));
+        }
+
+        return $this->logs[$name] ??= $this->logs[$from]->withName($name);
     }
 
     /**

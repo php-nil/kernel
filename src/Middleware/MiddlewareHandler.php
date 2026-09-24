@@ -1,55 +1,75 @@
 <?php
+
 namespace Nil\Kernel\Middleware;
 
 use InvalidArgumentException;
 
 abstract class MiddlewareHandler implements MiddlewareHandlerInterface
 {
-    protected $wares = [];
+    /**
+     * 中间件队列
+     *
+     * @var list<callable>
+     */
+    protected array $wares = [];
+
+    /**
+     * 核心操作
+     *
+     * @var callable|null
+     */
     protected $middle;
 
-    public function setMiddle(callable $middle)
+    public function setMiddle(callable $middle): static
     {
         $this->middle = $middle;
 
         return $this;
     }
 
-    public function hasMiddle()
+    public function hasMiddle(): bool
     {
         return null !== $this->middle;
     }
 
-    // 添加中间件
-    public function addMiddleWare(callable $ware, bool $isPre = false)
+    /**
+     * 添加中间件
+     *
+     * @param bool $isPre 为 true 时插入队列首部（最先执行，洋葱模型最外层）
+     */
+    public function addMiddleWare(callable $ware, bool $isPre = false): void
     {
         if ($isPre) {
             array_unshift($this->wares, $ware);
         } else {
             $this->wares[] = $ware;
         }
-
     }
 
-    // 执行
-    protected function doHandle(array $param)
+    /**
+     * 执行中间件链
+     *
+     * 以深度索引而非数组内部指针推进：同一层中间件多次调用 $next（重试/重入）
+     * 每次都会完整经过后续层，且 handler 可重复执行。
+     *
+     * @param array<int, mixed> $param
+     */
+    protected function doHandle(array $param, int $depth = 0): mixed
     {
         if (!$this->hasMiddle()) {
-            throw new InvalidArgumentException("未定义中间操作");
+            throw new InvalidArgumentException('未定义中间操作');
         }
 
-        $ware = current($this->wares);
-
-        // 完成
-        if (false === $ware) {
+        // 链已到底，执行核心操作
+        if (!isset($this->wares[$depth])) {
             return call_user_func_array($this->middle, $param);
         }
 
-        next($this->wares);
+        $ware = $this->wares[$depth];
 
-        // next
-        $param[] = function () {
-            return call_user_func_array([$this, 'handle'], func_get_args());
+        // next：固定从下一层开始，重复调用互不影响
+        $param[] = function () use ($depth) {
+            return $this->doHandle(func_get_args(), $depth + 1);
         };
 
         return call_user_func_array($ware, $param);

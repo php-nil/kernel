@@ -2,6 +2,9 @@
 
 namespace Nil\Kernel\Exception;
 
-class FileNotFoundException extends \BadMethodCallException
+/**
+ * 文件未找到异常
+ */
+class FileNotFoundException extends \RuntimeException
 {
 }

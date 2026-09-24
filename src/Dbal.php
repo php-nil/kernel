@@ -12,8 +12,6 @@ use Monolog\Processor\PsrLogMessageProcessor;
 use Monolog\Handler\TestHandler;
 use Monolog\Handler\HandlerInterface;
 
-// Nil::use(['doctrine.dbal']);
-
 /**
  * Dbal 数据库连接管理器
  * 

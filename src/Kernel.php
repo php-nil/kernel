@@ -3,7 +3,6 @@
 namespace Nil\Kernel;
 
 use Nil\Nil;
-use Symfony\Component\ErrorHandler\BufferingLogger;
 use Symfony\Component\ErrorHandler\Debug;
 use Symfony\Component\ErrorHandler\ErrorHandler;
 use Psr\Cache\CacheItemPoolInterface;
@@ -25,6 +24,11 @@ final class Kernel
      * 是否已初始化
      */
     private static bool $initialized = false;
+
+    /**
+     * 是否已完成启动（boot 仅生效一次）
+     */
+    private static bool $booted = false;
 
 
     /**
@@ -77,8 +81,10 @@ final class Kernel
         $LOG_PATH = Nil::path()->RUNTIME . \DIRECTORY_SEPARATOR . 'log';
         $CACHE_PATH = Nil::path()->RUNTIME . \DIRECTORY_SEPARATOR . 'cache';
 
-        if (!is_dir($LOG_PATH) && !mkdir($LOG_PATH, 0777, true)) {
-            throw new \RuntimeException('Failed to create log directory');
+        foreach ([$LOG_PATH, $CACHE_PATH] as $dir) {
+            if (!\is_dir($dir) && !\mkdir($dir, 0777, true) && !\is_dir($dir)) {
+                throw new \RuntimeException(\sprintf('Failed to create directory "%s"', $dir));
+            }
         }
 
         $ERROR_LOG = $LOG_PATH . \DIRECTORY_SEPARATOR . 'kernel_error.log';
@@ -90,7 +96,8 @@ final class Kernel
             self::$errorHandler = Debug::enable();
         } else {
             self::$errorHandler = ErrorHandler::register();
-            self::$errorHandler->setDefaultLogger(new BufferingLogger());
+            // 生产环境错误经 Monolog 落盘（默认 LOG/default_rotating 日志，channel: kernel_error）
+            self::$errorHandler->setDefaultLogger(self::getLog()->withName('kernel_error'));
         }
 
         self::$app = new App;
@@ -196,13 +203,20 @@ final class Kernel
 
     /**
      * 启动应用-只调用一次
-     * 
-     * @param string|\Closure[] $events 事件收集列表
-     * 
+     *
+     * @param string|\Closure ...$events 事件收集器：闭包（接收 EventDispatcher）或实现 EventCollectorInterface 的类名
+     *
      * @return void
+     *
+     * @throws \InvalidArgumentException 事件收集器类不存在或未实现 EventCollectorInterface
      */
     public static function boot(string|\Closure ...$events): void
     {
+        // boot 只生效一次：重复调用直接忽略，避免重复注册收集器与重复运行应用
+        if (self::$booted) {
+            return;
+        }
+
         // 初始化 Kernel
         static::init();
 
@@ -214,13 +228,19 @@ final class Kernel
             }
 
             // 事件类必须实现 EventCollectorInterface 接口
-            if (class_exists($event) && is_subclass_of($event,EventCollectorInterface::class)) {
+            if (class_exists($event) && is_subclass_of($event, EventCollectorInterface::class)) {
                 $event::kernelEvent($dispatcher);
             } else {
-                throw new \Exception("event{$event} class not found or not implements EventCollectorInterface!");
+                throw new \InvalidArgumentException(\sprintf(
+                    'Event collector "%s" not found or does not implement %s.',
+                    $event,
+                    EventCollectorInterface::class
+                ));
             }
         }
 
+        // 收集器全部注册成功后再置位：非法收集器抛异常时仍可纠正重试
+        self::$booted = true;
         self::$app->run();
     }
 }

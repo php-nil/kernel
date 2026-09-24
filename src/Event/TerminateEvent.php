@@ -1,29 +1,34 @@
 <?php
+
 namespace Nil\Kernel\Event;
 
-use Symfony\Component\HttpFoundation\{Response,Request};
+use Symfony\Component\HttpFoundation\{Request, Response};
+use Symfony\Contracts\EventDispatcher\Event;
 
 /**
- * 输出内容之后(扫尾工作)
+ * TerminateEvent 响应输出后终止事件（扫尾工作）
  */
-class TerminateEvent
+class TerminateEvent extends Event
 {
-    protected $response;
-    protected $request;
-
-    public function __construct(Request $request, Response $response)
-    {
-        $this->response = $response;
-        $this->request = $request;
+    public function __construct(
+        protected Request $request,
+        protected Response $response,
+    ) {
     }
 
-    public function getResponse()
-    {
-        return $this->response;
-    }
-
-    public function getRequest()
+    /**
+     * 获取当前请求对象
+     */
+    public function getRequest(): Request
     {
         return $this->request;
+    }
+
+    /**
+     * 获取最终响应对象
+     */
+    public function getResponse(): Response
+    {
+        return $this->response;
     }
 }

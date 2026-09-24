@@ -20,6 +20,9 @@
             "Nil\\Kernel\\": "src/"
         }
     },
+    "suggest": {
+        "ext-apcu": "Required to use the APCu cache adapter (Cache::createApcuAdapter)"
+    },
     "minimum-stability": "stable",
     "prefer-stable": true
 }

@@ -66,10 +66,11 @@ class MatchedEvent extends Event
     /**
      * 重新定义指定路由的控制器
      *
-     * @param string $route 路由名称
-     * @param callable $controller 控制器闭包或回调函数
+     * 注意：当 $controller 为闭包时，会被视为“控制器工厂”立即调用，
+     * 其返回值（应为 callable）才是实际控制器；其他 callable 直接作为控制器。
      *
-     * @return void
+     * @param string $route 路由名称
+     * @param callable $controller 控制器闭包工厂或回调
      */
     public function restController(string $route, callable $controller): void
     {

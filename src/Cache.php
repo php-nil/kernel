@@ -9,8 +9,6 @@ use Symfony\Component\Cache\Adapter\DoctrineDbalAdapter;
 use Symfony\Component\Cache\Adapter\PhpArrayAdapter;
 use Symfony\Component\Cache\Adapter\ApcuAdapter;
 
-// Nil::use('symfony.cache');
-
 /**
  * Cache 缓存管理器
  * 
