@@ -29,7 +29,7 @@ class Dbal
     /**
      * 数据库连接配置
      *
-     * @var array<string, array>
+     * @var array<string, list<mixed>>
      */
     private array $config = [];
 
@@ -45,7 +45,7 @@ class Dbal
      *
      * @return self
      */
-    public function setDefaultConfig(...$params): self
+    public function setDefaultConfig(mixed ...$params): self
     {
         $this->config[DEFAULT_NAME] = $params;
 
@@ -60,7 +60,7 @@ class Dbal
      *
      * @return self
      */
-    public function setConfig(string $name, ...$params): self
+    public function setConfig(string $name, mixed ...$params): self
     {
         $this->config[$name] = $params;
 
@@ -74,7 +74,7 @@ class Dbal
      *
      * @return Connection
      */
-    public function create(...$params): Connection
+    public function create(mixed ...$params): Connection
     {
         return DriverManager::getConnection(...$params);
     }
@@ -131,10 +131,7 @@ class Dbal
             $this->config[$name][1] = (new Configuration())->setMiddlewares([$middleware]);
         }
 
-        return $this->connections[$name] = \call_user_func_array(
-            [$this, 'create'],
-            $this->config[$name]
-        );
+        return $this->connections[$name] = $this->create(...$this->config[$name]);
     }
 
     /**
@@ -177,6 +174,7 @@ class Dbal
         }
 
         return $this->handler = new class extends AbstractProcessingHandler {
+            #[\Override]
             protected function write(LogRecord $record): void
             {
                 dump($record->toArray());

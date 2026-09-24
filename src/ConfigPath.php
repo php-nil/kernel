@@ -7,7 +7,7 @@ namespace Nil\Kernel;
  *
  * 用于管理系统运行时的关键路径配置，包括日志目录和缓存目录。
  */
-class ConfigPath
+readonly class ConfigPath
 {
     public function __construct(
         /**

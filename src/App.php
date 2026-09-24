@@ -39,7 +39,7 @@ class App
     /**
      * 事件分发
      */
-    protected function eventDispatch(object $event, string $eventName)
+    protected function eventDispatch(object $event, string $eventName): object
     {
         return $this->dispatcher->dispatch($event, $eventName);
     }
@@ -47,7 +47,7 @@ class App
     /**
      * 获取事件分发
      */
-    public function getDispatcher()
+    public function getDispatcher(): EventDispatcher
     {
         return $this->dispatcher;
     }
@@ -55,7 +55,7 @@ class App
     /**
      * 运行
      */
-    public function run()
+    public function run(): void
     {
         if (\in_array(\PHP_SAPI, ['cli', 'phpdbg'], true)) {
             $this->runConsole();
@@ -67,7 +67,7 @@ class App
     /**
      * 命令行模式运行
      */
-    protected function runConsole()
+    protected function runConsole(): void
     {
         $event = new Event\ConsoleEvent;
         $this->eventDispatch($event, self::EVENT_CONSOLE);
@@ -77,7 +77,7 @@ class App
     /**
      * web执行
      */
-    protected function runWeb()
+    protected function runWeb(): void
     {
         // 请求事件
         $event = new Event\RequestEvent;
@@ -93,10 +93,8 @@ class App
                 : $this->handle($request);
 
             // 内容发送前（监听器可替换最终响应）
-            $responseEvent = $this->eventDispatch(
-                new Event\ResponseEvent($request, $response),
-                self::EVENT_RESPONSE
-            );
+            $responseEvent = new Event\ResponseEvent($request, $response);
+            $this->eventDispatch($responseEvent, self::EVENT_RESPONSE);
             $response = $responseEvent->getResponse();
         } catch (\Throwable $e) {
             // request / response 阶段异常同样纳入 kernel.exception 接管；
@@ -118,7 +116,7 @@ class App
     /**
      * 获取路由匹配
      */
-    protected function _getUrlMatcher(Request $request)
+    protected function _getUrlMatcher(Request $request): UrlMatcher
     {
         if (Nil::debug()) {
             // 路由事件 收集路由集

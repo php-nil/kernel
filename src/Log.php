@@ -97,7 +97,7 @@ class Log
      */
     public function newLogger(string $name, array $useHandler = [], array $processors = []): Logger
     {
-        $handlers = empty($useHandler) ? [$this->getDefaultHandler()] : $useHandler;
+        $handlers = $useHandler === [] ? [$this->getDefaultHandler()] : $useHandler;
 
         return new Logger($name, $handlers, $processors);
     }

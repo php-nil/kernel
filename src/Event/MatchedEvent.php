@@ -15,11 +15,6 @@ use Nil\Kernel\Middleware\ControllerMiddlewareHandler;
 class MatchedEvent extends Event
 {
     /**
-     * 当前请求对象
-     */
-    private Request $request;
-
-    /**
      * 响应对象（可能为 null）
      */
     private ?Response $response = null;
@@ -34,10 +29,7 @@ class MatchedEvent extends Event
      *
      * @param Request $request 当前请求对象
      */
-    public function __construct(Request $request)
-    {
-        $this->request = $request;
-    }
+    public function __construct(private Request $request) {}
 
     /**
      * 获取中间件处理器（懒加载）

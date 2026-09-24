@@ -34,7 +34,7 @@ class RouterEvent extends Event
     /**
      * 生成递增的唯一路由名（匿名路由使用）
      */
-    protected function _makeUniqidRouteName()
+    protected function _makeUniqidRouteName(): string
     {
         $this->name ??= uniqid('un');
 
@@ -44,7 +44,7 @@ class RouterEvent extends Event
     /**
      * 添加路由
      */
-    public function add(Route $route, ?string $name = null)
+    public function add(Route $route, ?string $name = null): static
     {
         $name ??= $this->_makeUniqidRouteName();
 
@@ -53,7 +53,7 @@ class RouterEvent extends Event
         return $this;
     }
 
-    public function addCollection(RouteCollection $collection)
+    public function addCollection(RouteCollection $collection): static
     {
         $this->routeCollection->addCollection($collection);
 

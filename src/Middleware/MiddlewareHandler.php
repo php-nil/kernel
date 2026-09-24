@@ -62,7 +62,7 @@ abstract class MiddlewareHandler implements MiddlewareHandlerInterface
 
         // 链已到底，执行核心操作
         if (!isset($this->wares[$depth])) {
-            return call_user_func_array($this->middle, $param);
+            return ($this->middle)(...$param);
         }
 
         $ware = $this->wares[$depth];
@@ -72,6 +72,6 @@ abstract class MiddlewareHandler implements MiddlewareHandlerInterface
             return $this->doHandle(func_get_args(), $depth + 1);
         };
 
-        return call_user_func_array($ware, $param);
+        return $ware(...$param);
     }
 }

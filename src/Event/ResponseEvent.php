@@ -59,6 +59,7 @@ class ResponseEvent extends Event
     /**
      * @deprecated 使用 handleRoute() 代替，保留以兼容旧代码
      */
+    #[\Deprecated(message: '使用 handleRoute() 代替', since: '8.4')]
     public function handelRoute(string $route, callable $call): void
     {
         $this->handleRoute($route, $call);
