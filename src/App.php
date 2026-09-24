@@ -82,26 +82,33 @@ class App
         // 请求事件
         $event = new Event\RequestEvent;
 
-        // 事件分发
-        $this->eventDispatch($event, self::EVENT_REQUEST);
+        try {
+            // 事件分发
+            $this->eventDispatch($event, self::EVENT_REQUEST);
 
-        // 获取 Response
-        $request = $event->getRequest();
-        $response = $event->hasResponse()
-            ? $event->getResponse()
-            : $this->handle($request);
+            // 获取 Response
+            $request = $event->getRequest();
+            $response = $event->hasResponse()
+                ? $event->getResponse()
+                : $this->handle($request);
 
-        // 内容发送前（监听器可替换最终响应）
-        $responseEvent = $this->eventDispatch(
-            new Event\ResponseEvent($request, $response),
-            self::EVENT_RESPONSE
-        );
-        $response = $responseEvent->getResponse();
+            // 内容发送前（监听器可替换最终响应）
+            $responseEvent = $this->eventDispatch(
+                new Event\ResponseEvent($request, $response),
+                self::EVENT_RESPONSE
+            );
+            $response = $responseEvent->getResponse();
+        } catch (\Throwable $e) {
+            // request / response 阶段异常同样纳入 kernel.exception 接管；
+            // 此时响应尚未发送，未接管则原样抛出，交由 ErrorHandler 处理
+            $request = $event->getRequest();
+            $response = $this->handleException($request, $e);
+        }
 
         // 发送
         $response->prepare($request)->send();
 
-        // 结束
+        // 结束（响应已发送，terminate 监听器异常不再回流接管，与上游 HttpKernel 行为一致）
         $this->eventDispatch(
             new Event\TerminateEvent($request, $response),
             self::EVENT_TERMINATE
@@ -157,33 +164,31 @@ class App
 
     /**
      * 处理 request->Response
+     *
+     * 全链路异常（路由收集 / 缓存编译 / notmatched 监听器 / matched 监听器 /
+     * 中间件 / 控制器）统一由外层 kernel.exception 通道接管；未接管时原样抛出。
      */
     public function handle(Request $request): Response
     {
-        // 1. 获取urlmatch（路由收集 / 缓存编译失败同样可由 kernel.exception 接管）
         try {
+            // 1. 获取urlmatch
             $matcher = $this->_getUrlMatcher($request);
-        } catch (\Throwable $e) {
-            return $this->handleException($request, $e);
-        }
 
-        // 2. 匹配路由
-        try {
-            $parameters = $matcher->matchRequest($request);
-        } catch (\Throwable $th) {
-            // 事件 未匹配成功
-            $event = new Event\NotMatchedEvent($request, $th);
-            $this->eventDispatch($event, self::EVENT_NOT_MATCHED);
-            if ($event->hasResponse()) {
-                return $event->getResponse();
+            // 2. 匹配路由
+            try {
+                $parameters = $matcher->matchRequest($request);
+            } catch (\Throwable $th) {
+                // 事件 未匹配成功（监听器可替换默认 404；监听器自身异常落入外层接管）
+                $event = new Event\NotMatchedEvent($request, $th);
+                $this->eventDispatch($event, self::EVENT_NOT_MATCHED);
+                if ($event->hasResponse()) {
+                    return $event->getResponse();
+                }
+
+                return new Response('404 Not Found.', 404);
             }
 
-            return new Response('404 Not Found.', 404);
-        }
-
-        // 3. 匹配成功后的处理（控制器/中间件异常可由 kernel.exception 接管）
-        try {
-            // 合并路由参数：同名键以路由结果覆盖，同时保留 request 阶段写入的自定义属性
+            // 3. 合并路由参数：同名键以路由结果覆盖，同时保留 request 阶段写入的自定义属性
             $request->attributes->add($parameters);
 
             // 4. 事件 路由匹配成功

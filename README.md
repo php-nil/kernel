@@ -7,6 +7,7 @@ Nil 框架的轻量内核组件：事件驱动的 Web / CLI 双运行时、洋�
 
 - PHP >= 8.4
 - APCu 扩展（可选，仅在使用 APCu 缓存适配器时需要）
+- symfony/var-dumper（可选，仅在使用 `Dbal::setDumpHandler()` 输出 SQL 调试日志时需要）
 
 ## 安装
 
@@ -78,8 +79,9 @@ $dispatcher->addListener(App::EVENT_ROUTER, function (RouterEvent $event) {
 ### 404 / 500 接管
 
 - `kernel.notmatched`：路由未命中，`setResponse()` 可替换默认 `404 Not Found.`；
-- `kernel.exception`：控制器、中间件或路由收集 / 缓存编译阶段抛异常，`setResponse()`
-  可接管为 500 响应；未接管时异常继续抛出，交由 ErrorHandler 处理；
+- `kernel.exception`：请求监听器、路由收集 / 缓存编译、notmatched 监听器、matched
+  监听器、中间件、控制器、响应监听器任一环节抛异常，`setResponse()` 均可接管为 500
+  响应；未接管时异常继续抛出，交由 ErrorHandler 处理（接管点均在响应发送之前）；
 - `kernel.matched` / `kernel.request` 中 `setResponse()` 会立即短路后续处理。
 
 ### CLI
@@ -93,9 +95,9 @@ $dispatcher->addListener(App::EVENT_ROUTER, function (RouterEvent $event) {
 | `Kernel::cache(?string $name)` | 获取命名缓存池；默认 `PhpFilesAdapter`（`RUNTIME/cache`） |
 | `Kernel::getCache()` | 缓存管理器：`set/setDefault`、`createPhpFilesAdapter`、`createPhpArrayAdapter`、`createDbalAdapter`、`createApcuAdapter` |
 | `Kernel::log(?string $name)` | 获取命名 Monolog 实例 |
-| `Kernel::getLog()` | 日志管理器：`withStreamLogger`、`withRotatingFileLogger`、`withTestLogger`、`setLogger`、`setDefaultHandler` |
+| `Kernel::getLog()` | 日志管理器：`withStreamLogger`、`withRotatingFileLogger`、`withTestLogger`、`setLogger`、`cloneFromName`、`setDefaultHandler` |
 | `Kernel::dbal(?string $name)` | 获取命名 DBAL 连接 |
-| `Kernel::getDbal()` | 连接管理器：`setDefaultConfig/setConfig`（参数同 `DriverManager::getConnection`），`setTestHandler/setDumpHandler` 开启 SQL 日志 |
+| `Kernel::getDbal()` | 连接管理器：`setDefaultConfig/setConfig`（参数同 `DriverManager::getConnection`），`setTestHandler/setDumpHandler` 开启 SQL 日志（`setDumpHandler` 需可选安装 symfony/var-dumper） |
 | `Kernel::errorHandler()` / `Kernel::path()` | 错误处理器 / 日志与缓存路径 |
 
 ## 路由缓存
@@ -104,8 +106,10 @@ $dispatcher->addListener(App::EVENT_ROUTER, function (RouterEvent $event) {
 - 非 debug 模式：首次请求将匹配器原子写入 `RUNTIME/<入口名>.UrlMatcher.php`
   （临时文件 + rename，并发安全），之后直接使用编译缓存；**路由变更后删除该文件即可重新生成**。
 
-注意：编译缓存基于 VarExporter，非 debug 模式下 `_controller` 不能使用闭包，
-请使用静态方法（`[Class::class, 'method']`）、函数名或可导出对象；
+注意：编译缓存由 Symfony Routing 的 `CompiledUrlMatcherDumper` 静态导出（var_export 风格数组），
+非 debug 模式下 `_controller` 不能使用闭包或任何对象（dumper 遇对象直接抛
+`InvalidArgumentException`，该异常可经 `kernel.exception` 接管），请使用静态方法
+（`[Class::class, 'method']`）或函数名字符串；
 PHP 8.4 起非静态方法的 `[类名, 方法]` 不被 `is_callable()` 接受。debug 模式无此限制。
 
 ## 错误与日志

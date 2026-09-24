@@ -76,8 +76,8 @@ class Log
      * 设置日志实例
      *
      * @param string $name 日志名称
-     * @param array $useHandler 处理器列表
-     * @param array $processors 处理器列表
+     * @param array $useHandler 处理器（Handler）列表
+     * @param array $processors 处理器（Processor）列表
      *
      * @return Logger
      */
@@ -90,8 +90,8 @@ class Log
      * 创建新的日志实例
      *
      * @param string $name 日志名称
-     * @param array $useHandler 处理器列表，为空则使用默认处理器
-     * @param array $processors 处理器列表
+     * @param array $useHandler 处理器（Handler）列表，为空则使用默认处理器
+     * @param array $processors 处理器（Processor）列表
      *
      * @return Logger
      */

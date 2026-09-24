@@ -9,9 +9,9 @@ use Symfony\Component\HttpFoundation\Request;
 
 class RouterEvent extends Event
 {
-    /**路由收集类 */
+    /** 路由收集类 */
     protected RouteCollection $routeCollection;
-    /**路由随即名称 */
+    /** 匿名路由的递增唯一名序列 */
     protected string $name;
 
     public function __construct(
@@ -32,7 +32,7 @@ class RouterEvent extends Event
     }
 
     /**
-     * 获取当下类唯一名称
+     * 生成递增的唯一路由名（匿名路由使用）
      */
     protected function _makeUniqidRouteName()
     {

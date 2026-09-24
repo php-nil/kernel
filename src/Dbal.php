@@ -160,10 +160,22 @@ class Dbal
     /**
      * 设置调试日志处理器（直接输出到控制台）
      *
+     * 依赖 symfony/var-dumper 提供的 dump()；未安装时快速失败并给出安装指引，
+     * 避免在首条 SQL 落日志时才触发未定义函数致命错误。
+     *
      * @return HandlerInterface
+     *
+     * @throws \RuntimeException symfony/var-dumper 未安装
      */
     public function setDumpHandler(): HandlerInterface
     {
+        if (!\function_exists('dump')) {
+            throw new \RuntimeException(
+                'Dbal::setDumpHandler() requires symfony/var-dumper (provides dump()). '
+                . 'Install it via "composer require symfony/var-dumper".'
+            );
+        }
+
         return $this->handler = new class extends AbstractProcessingHandler {
             protected function write(LogRecord $record): void
             {

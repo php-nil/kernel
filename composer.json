@@ -21,7 +21,8 @@
         }
     },
     "suggest": {
-        "ext-apcu": "Required to use the APCu cache adapter (Cache::createApcuAdapter)"
+        "ext-apcu": "Required to use the APCu cache adapter (Cache::createApcuAdapter)",
+        "symfony/var-dumper": "Required to dump SQL logs to console (Dbal::setDumpHandler)"
     },
     "minimum-stability": "stable",
     "prefer-stable": true
